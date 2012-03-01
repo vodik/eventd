@@ -12,21 +12,24 @@ static volatile sig_atomic_t got_SIGCHLD = 0;
 static void
 child_sig_handler(int sig)
 {
-	got_SIGCHLD = 1;
+	/* got_SIGCHLD = 1; */
 }
 
-void
+static void
 read_event(int fd)
 {
 	struct input_event event;
 
 	read(fd, &event, sizeof(struct input_event));
-	printf("Event type is %d\n", event.type);
-	printf("Event code is %d\n", event.code);
-	printf("Event value is %d\n", event.value);
+	if (event.type == 0)
+		return;
+
+	char cmd[128];
+	sprintf(cmd, "./eventd.sh %d %d %d", event.type, event.code, event.value);
+	system(cmd);
 }
 
-void
+static void
 select_events(int fd)
 {
 	sigset_t sigmask, empty_mask;
@@ -66,9 +69,8 @@ select_events(int fd)
 		if (got_SIGCHLD)
 			return;
 
-		if (FD_ISSET(fd, &rd)) {
+		if (FD_ISSET(fd, &rd))
 			read_event(fd);
-		}
 	}
 }
 
