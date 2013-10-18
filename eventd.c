@@ -9,14 +9,12 @@
 
 static volatile sig_atomic_t got_SIGCHLD = 0;
 
-static void
-child_sig_handler(int sig)
+static void child_sig_handler(int sig)
 {
 	/* got_SIGCHLD = 1; */
 }
 
-static void
-read_event(int fd)
+static void read_event(int fd)
 {
 	struct input_event event;
 
@@ -24,13 +22,28 @@ read_event(int fd)
 	if (event.type == 0)
 		return;
 
-	char cmd[128];
-	sprintf(cmd, "./eventd.sh %d %d %d", event.type, event.code, event.value);
-	system(cmd);
+	char type[6], code[6];
+	char value[12];
+
+	sprintf(type, "%d", event.type);
+	sprintf(code, "%d", event.code);
+	sprintf(value, "%d", event.value);
+
+	switch (fork()) {
+		case -1:
+			break;
+		case 0:
+			execl("./eventd.sh", "eventd.sh", type, code, value, NULL);
+			break;
+		default:
+			break;
+	}
+
+	int status;
+	wait(&status);
 }
 
-static void
-select_events(int fd)
+static void select_events(int fd)
 {
 	sigset_t sigmask, empty_mask;
 	struct sigaction sa;
@@ -74,8 +87,7 @@ select_events(int fd)
 	}
 }
 
-int
-main(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 	int fd = -1;
 	char name[256] = "Unknown";
