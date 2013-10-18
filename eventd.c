@@ -12,13 +12,12 @@
 static void read_event(int fd)
 {
 	struct input_event event;
+	char type[6], code[6]; /* u16: 5 digits + null */
+	char value[12]; /* s32: 10 digits + sign + null */
 
 	read(fd, &event, sizeof(struct input_event));
 	if (event.type == 0)
 		return;
-
-	char type[6], code[6]; /* u16: 5 digits + null */
-	char value[12];        /* s32: 10 digits + sign + null */
 
 	snprintf(type, sizeof(type), "%d", event.type);
 	snprintf(code, sizeof(code), "%d", event.code);
@@ -39,25 +38,6 @@ static void read_event(int fd)
 	wait(&status);
 }
 
-static void select_events(int fd)
-{
-	fd_set rd;
-	int nfds, r;
-
-	while (1) {
-		FD_ZERO(&rd);
-		FD_SET(fd, &rd);
-		nfds = fd + 1;
-
-		r = select(nfds, &rd, NULL, NULL, NULL);
-		if (r == -1 && errno != EINTR)
-			err(1, "select falsed");
-
-		if (FD_ISSET(fd, &rd))
-			read_event(fd);
-	}
-}
-
 int main(int argc, char* argv[])
 {
 	int fd = -1;
@@ -74,8 +54,10 @@ int main(int argc, char* argv[])
 		err(1, "evdev ioctl failed");
 
 	printf("The device on %s says its name is %s\n", argv[1], name);
-	select_events(fd);
-	close(fd);
 
+	while (1)
+		read_event(fd);
+
+	close(fd);
 	return 0;
 }
