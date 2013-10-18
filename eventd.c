@@ -20,9 +20,9 @@ static void read_event(int fd)
 	char type[6], code[6]; /* u16: 5 digits + null */
 	char value[12];        /* s32: 10 digits + sign + null */
 
-	sprintf(type, "%d", event.type);
-	sprintf(code, "%d", event.code);
-	sprintf(value, "%d", event.value);
+	snprintf(type, sizeof(type), "%d", event.type);
+	snprintf(code, sizeof(code), "%d", event.code);
+	snprintf(value, sizeof(value), "%d", event.value);
 
 	switch (fork()) {
 		case -1:
