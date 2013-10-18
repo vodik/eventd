@@ -1,12 +1,6 @@
 #!/bin/bash
 
-(( $1 != 5 )) && exit
-(( $2 != 2 )) && exit
+(( $1 != 1 || $3 != 1 )) && exit
 
-if (( $3 == 0 )); then
-  amixer -q set Master off
-  mpc stop
-else
-  amixer -q set Master on
-  mpc play
-fi
+(( $2 == 115 )) && exec ponymix increase 5
+(( $2 == 114 )) && exec ponymix decrease 5
